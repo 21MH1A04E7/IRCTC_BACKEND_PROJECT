@@ -54,6 +54,11 @@ class ValidationError extends AppError {
         super(message, 422, code);
     }
 }
+class ToManyRequestsError extends AppError{
+    constructor(message,code='TOO_MANY_REQUESTS'){
+        super(message,429,code)
+    }
+}
 
 
 
@@ -68,4 +73,5 @@ module.exports={
     InternalServerError,
     ServiceUnavailableError,
     ValidationError,
+    ToManyRequestsError
 }   
