@@ -4,70 +4,83 @@ const logger = require('./logger');
 
 class RedisClient {
     static #instance = null;
-
-    #client = null;
-    #isConnected = false;
+    static #isConnected=false;
 
     constructor() {
-        if (RedisClient.#instance) {
-            return RedisClient.#instance;
-        }
-        RedisClient.#instance = this;
+       //prevent the direct redis instance creating
     }
 
     static getInstance() {
         if (!RedisClient.#instance) {
             RedisClient.#instance = new Redis(config.REDIS_URL,{
-                
+                retryStrategy:(times)=>{
+                    const delay=Math.min(times*50,2000);
+                    return delay;
+                },
+                maxRetriesPerRequest:3
             });
+            RedisClient.setupEventListeners();
         }
         return RedisClient.#instance;
     }
 
-    async connect() {
-        if (this.#isConnected && this.#client?.isOpen) {
-            return this.#client;
+    static setupEventListeners(){
+        RedisClient.#instance.on('connect', () =>{
+             RedisClient.#isConnected = true;
+             logger.info("Connected to Redis");
+        })
+
+        RedisClient.#instance.on('error', (error) =>{
+             RedisClient.#isConnected = false;
+             logger.error("Redis connection error", error);
+        })
+
+        RedisClient.#instance.on('close', () =>{
+             RedisClient.#isConnected = false;
+             logger.warn("Redis connection closed");
+        })
+
+        RedisClient.#instance.on('reconnecting', () =>{
+             logger.warn("Reconnecting to Redis...");
+        })
+
+        RedisClient.#instance.on('ready', () =>{
+             logger.warn("Redis client is ready");
+        })
+
+        RedisClient.#instance.on('end', () =>{
+             RedisClient.#isConnected = false;
+             logger.warn("Redis connection ended");
+        })
+   }
+
+   static async closeConnection(){
+        if(RedisClient.#instance){
+             try{
+                  await RedisClient.#instance.quit();
+                  logger.info("Redis connection closed");
+             }catch(error){
+                  logger.error("Error closing Redis connection: ", error);
+             }
         }
+   }
 
-        this.#client = createClient({ url: config.REDIS_URL });
+   static isReady(){
+        return RedisClient.#isConnected;
+   }
 
-        this.#client.on('error', (err) => {
-            logger.error(`Redis client error: ${err.message}`);
-        });
-
-        this.#client.on('connect', () => {
-            logger.info('Redis connecting');
-        });
-
-        this.#client.on('ready', () => {
-            logger.info('Redis connected');
-        });
-
-        await this.#client.connect();
-        this.#isConnected = true;
-        return this.#client;
-    }
-
-    getClient() {
-        if (!this.#client?.isOpen) {
-            throw new Error('Redis client is not connected. Call connect() first.');
+   static async testConnection(){
+        try{
+             await RedisClient.#instance.ping();
+             return true;
+        }catch(error){
+             logger.error("Redis connection test failed: ", error);
+             return false;
         }
-        return this.#client;
-    }
-
-    async disconnect() {
-        if (!this.#client?.isOpen) {
-            return;
-        }
-        await this.#client.quit();
-        this.#isConnected = false;
-        logger.info('Redis disconnected');
-    }
-
-    async ping() {
-        const client = this.getClient();
-        return client.ping();
-    }
+   }
 }
 
-module.exports = RedisClient;
+module.exports ={
+    redis:RedisClient.getInstance(),
+    RedisClient
+};

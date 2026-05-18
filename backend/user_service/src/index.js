@@ -3,6 +3,7 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const {config}=require('./config');
 const logger=require('./config/logger')
+const db=require('./db/knex')
 
 const corsMiddleware=require('./middlewares/cors_middleware');
 const reqLogger=require('./middlewares/req_middleware');
@@ -30,6 +31,8 @@ app.use(errorMiddleware);
 
 const startServer=async()=>{
     try {
+        await db.raw('SELECT 1')
+        .then(()=>console.log('database connnected sucessfully'))
         const server=app.listen(config.port, () => {
             logger.info(
                 `${config.SERVICE_NAME} is running on port ${config.port}`
