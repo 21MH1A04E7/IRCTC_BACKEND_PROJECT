@@ -1,4 +1,12 @@
-name:backend-service
+name: backend-service
 
 services:
-  
+  redis:
+    image: redis/redis-stack:6.2.6-v19
+    container_name: redis
+    restart: always
+    environment:
+      REDIS_ARGS: "--requirepass hariom"
+    ports:
+      - "6379:6379"
+      - "8001:8001"
