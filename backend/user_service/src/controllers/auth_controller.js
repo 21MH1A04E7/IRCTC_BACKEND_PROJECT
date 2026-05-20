@@ -1,6 +1,7 @@
 const asyncHandler=require('../utils/asyncHandler');
 const { BadRequestError } = require('../utils/error');
 const authService=require('../services/auth_services')
+const {config}=require('../config')
 const Joi=require('joi')
 
 const sendOTPSchema = Joi.object({

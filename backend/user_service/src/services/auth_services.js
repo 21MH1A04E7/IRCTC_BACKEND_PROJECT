@@ -18,7 +18,7 @@ const sendOTP=async(firstName,lastName,email , password)=>{
     const meta={firstName,lastName,email,hashedPassword};
     const {otp,optSessionId}=await generateAndStoreOtp(meta);
     //sync email send
-    await sendOTPEmail(email,otp);
+    // await sendOTPEmail(email,otp);
     return {optSessionId}
 
 }

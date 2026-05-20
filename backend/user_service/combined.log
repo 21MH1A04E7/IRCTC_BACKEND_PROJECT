@@ -1,3 +1,1 @@
-[2026-05-20T19:09:09.437Z [INFO] [user_service]: Connected to Redis]
-[2026-05-20T19:09:09.461Z [INFO] [user_service]: user_service is running on port 3000]
-[2026-05-20T19:09:09.466Z [WARN] [user_service]: Redis client is ready]
+[2026-05-20T19:41:34.446Z [INFO] [user_service]: [POST] /api/v1/auth/send-otp - status: 429 - 153ms]
