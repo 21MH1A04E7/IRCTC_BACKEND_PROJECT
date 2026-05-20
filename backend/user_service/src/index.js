@@ -5,6 +5,8 @@ const {config}=require('./config');
 const logger=require('./config/logger')
 const db=require('./db/knex')
 
+const authRoutes=require('./routes/auth_route')
+
 const corsMiddleware=require('./middlewares/cors_middleware');
 const reqLogger=require('./middlewares/req_middleware');
 const errorMiddleware=require('./middlewares/error_middleware');
@@ -17,6 +19,8 @@ app.use(corsMiddleware);
 app.use(reqLogger);
 app.use(cookieParser());
 app.use(express.json());
+
+app.use("/api/v1/auth",authRoutes)
 
 
 app.get('/', (req, res) => {

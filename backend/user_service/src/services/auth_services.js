@@ -1,8 +1,9 @@
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const User = require('../models/user_model')
 const asyncHandler=require('../utils/asyncHandler');
 const { ConflictError } = require('../utils/error');
 const {sendOTPEmail}=require('../utils/email')
+const {generateAndStoreOtp}=require('../utils/otp')
 
 const sendOTP=async(firstName,lastName,email , password)=>{
 
