@@ -14,7 +14,10 @@ const config={
     DATABASE_PORT:Number(process.env.DATABASE_PORT),
     OTP_TTL: Number(process.env.OTP_TTL) || 300,
     OTP_RATE_MAX_PER_HOUR:Number(process.env.OTP_RATE_MAX_PER_HOUR) || 5,
-    HMAC_SECRET: process.env.HMAC_SECRET || process.env.MAC_SECRET || 'hmac_secret',
+    HMAC_SECRET:String(process.env.HMAC_SECRET)|| 'hac_secret',
+    NODE_MAILEREMAIL_USER:String(process.env.NODE_MAILEREMAIL_USER.trim()),
+    NODE_MAILEREMAIL_PASS:String(process.env.NODE_MAILEREMAIL_PASS.trim()),
+    NODE_MAILER_VERIFIED_EMAIL:String(process.env.NODE_MAILER_VERIFIED_EMAIL.trim())
 
 }
 

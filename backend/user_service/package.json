@@ -11,7 +11,6 @@
   "author": "hariom",
   "license": "ISC",
   "dependencies": {
-    "@sendgrid/mail": "^8.1.6",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -22,6 +21,7 @@
     "joi": "^18.2.1",
     "knex": "^3.2.10",
     "mysql2": "^3.22.3",
+    "nodemailer": "^8.0.7",
     "objection": "^3.1.5",
     "otp-generator": "^4.0.1",
     "winston": "^3.19.0"

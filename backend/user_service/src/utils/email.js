@@ -1,15 +1,13 @@
 const { config } = require("../config");
+const transporter=require('../config/nodemailer')
 
-const sgMail = require("@sendgrid/mail");
-
-sgMail.setApiKey(config.SENDGRID_API_KEY);
 
 const minute = (config.OTP_TTL || 300) / 60;
 
 const sendOTPEmail = async (email, otp) => {
   const msg = {
     to: email,
-    from: config.SENDGRID_VERIFIED_EMAIL,
+    from: config.NODE_MAILER_VERIFIED_EMAIL,
     subject: "Your OTP Verification Code",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e5e5; border-radius: 10px;">
@@ -46,7 +44,7 @@ const sendOTPEmail = async (email, otp) => {
   };
 
   try {
-    await sgMail.send(msg);
+    await transporter.sendMail(msg);
 
     console.log("OTP email sent successfully");
   } catch (error) {
@@ -57,7 +55,7 @@ const sendOTPEmail = async (email, otp) => {
 const verifyOtpEmail = async (meta) => {
     const msg = {
       to: meta.email,
-      from: config.SENDGRID_VERIFIED_EMAIL,
+      from: config.NODE_MAILER_VERIFIED_EMAIL,
       subject: "Email Verified Successfully",
       html: `
         <div style="
@@ -120,7 +118,7 @@ const verifyOtpEmail = async (meta) => {
     };
   
     try {
-      await sgMail.send(msg);
+      await transporter.sendMail(msg);
   
       console.log("Verification email sent successfully");
     } catch (error) {

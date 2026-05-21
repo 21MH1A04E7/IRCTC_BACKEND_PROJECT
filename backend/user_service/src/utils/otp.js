@@ -18,15 +18,15 @@ const generateAndStoreOtp = async (meta) => {
         )
     }
     const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false })
-    const optSessionId=crypto.randomUUID();
+    const otpSessionId=crypto.randomUUID();
     const hashedOtp=hmacFor(meta.email,otp);
-    await redis.set(`opt:session:${optSessionId}`,JSON.stringify({
+    await redis.set(`opt:session:${otpSessionId}`,JSON.stringify({
         hashedOtp,
         email:meta.email
     }),'EX',config.OTP_TTL)
     await redis.incr(rateKey)
     await redis.expire(rateKey,3600);
-    return {otp,optSessionId}
+    return {otp,otpSessionId}
 }
 
 module.exports = { generateAndStoreOtp }

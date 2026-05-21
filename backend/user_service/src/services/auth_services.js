@@ -16,10 +16,11 @@ const sendOTP=async(firstName,lastName,email , password)=>{
     const hashedPassword=await bcrypt.hash(password,10);
 
     const meta={firstName,lastName,email,hashedPassword};
-    const {otp,optSessionId}=await generateAndStoreOtp(meta);
+    const {otp,otpSessionId}=await generateAndStoreOtp(meta);
     //sync email send
-    // await sendOTPEmail(email,otp);
-    return {optSessionId}
+    await sendOTPEmail(email,otp);
+    console.log(otp,otpSessionId)
+    return {otpSessionId}
 
 }
 
