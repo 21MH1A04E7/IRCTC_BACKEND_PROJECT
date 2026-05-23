@@ -17,7 +17,7 @@ const sendOTP = async (firstName, lastName, email, password) => {
     const meta = { firstName, lastName, email, hashedPassword };
     const { otp, otpSessionId } = await generateAndStoreOtp(meta);
     //sync email send
-    // await sendOTPEmail(email,otp);
+    await sendOTPEmail(email,otp);
     console.log(otp, otpSessionId)
     return { otpSessionId }
 
@@ -39,6 +39,7 @@ const verifyOTP = async (otp, otpSessionId) => {
     }
 
     await User.query().insert(user)
+    await verifyOtpEmail(meta)
     return user
 }
 

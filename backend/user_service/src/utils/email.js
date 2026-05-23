@@ -78,7 +78,7 @@ const verifyOtpEmail = async (meta) => {
             font-size: 16px;
             color: #555;
           ">
-            Hello ${meta.name || "User"},
+            Hello ${meta.firstName + meta.lastName || "User"},
           </p>
   
           <p style="
@@ -86,7 +86,7 @@ const verifyOtpEmail = async (meta) => {
             color: #555;
             line-height: 1.6;
           ">
-            Your email has been verified successfully.
+            Your email has been verified successfully. for the BACKEND PROJECT
           </p>
   
           <div style="

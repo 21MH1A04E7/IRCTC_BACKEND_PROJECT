@@ -9,7 +9,7 @@ function hmacFor(email,otp){
     return crypto.createHmac('sha256',config.HMAC_SECRET).update(email+":"+otp).digest('hex')
 }
 const generateAndStoreOtp = async (meta) => {
-    const rateKey = `opt:rate:${meta.email}`;
+    const rateKey = `otp:rate:${meta.email}`;
     const sendCount = parseInt(await redis.get(rateKey) || '0', 10)
     if (sendCount >= config.OTP_RATE_MAX_PER_HOUR) {
         throw new ToManyRequestsError(
@@ -20,7 +20,7 @@ const generateAndStoreOtp = async (meta) => {
     const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false })
     const otpSessionId=crypto.randomUUID();
     const hashedOtp=hmacFor(meta.email,otp);
-    await redis.set(`opt:session:${otpSessionId}`,JSON.stringify({
+    await redis.set(`otp:session:${otpSessionId}`,JSON.stringify({
         hashedOtp:hashedOtp,
         meta:meta
     }),'EX',config.OTP_TTL)
@@ -30,7 +30,7 @@ const generateAndStoreOtp = async (meta) => {
 }
 
 const verifyOTP=async(otp,otpSessionId)=>{
-    const rawData=await redis.get(`opt:session:${otpSessionId}`)
+    const rawData=await redis.get(`otp:session:${otpSessionId}`)
     if(!rawData) return null;
 
     const {hashedOtp:storedOtp,meta}=JSON.parse(rawData);
@@ -51,7 +51,7 @@ const verifyOTP=async(otp,otpSessionId)=>{
         return null;
     }
 
-    await redis.del(`opt:session:${otpSessionId}`);
+    await redis.del(`otp:session:${otpSessionId}`);
     await redis.del(`otp:rate:${meta.email}`),
     await redis.del(attemptsKey);
     return meta;

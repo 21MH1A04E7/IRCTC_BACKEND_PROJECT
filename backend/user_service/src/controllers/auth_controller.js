@@ -37,7 +37,6 @@ const sendOTP = asyncHandler(async (req, res) => {
 const verifyOTP=asyncHandler(async(req,res)=>{
     const {otp}=req.body;
     const otpSessionId=req.cookies.otp_session;
-    console.log(otpSessionId,otp)
     if(!otp || !otpSessionId){
         throw new BadRequestError("OTP or otpSessionId is missing");
     }
