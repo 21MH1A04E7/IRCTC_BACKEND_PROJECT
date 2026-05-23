@@ -21,12 +21,41 @@ const generateAndStoreOtp = async (meta) => {
     const otpSessionId=crypto.randomUUID();
     const hashedOtp=hmacFor(meta.email,otp);
     await redis.set(`opt:session:${otpSessionId}`,JSON.stringify({
-        hashedOtp,
-        email:meta.email
+        hashedOtp:hashedOtp,
+        meta:meta
     }),'EX',config.OTP_TTL)
     await redis.incr(rateKey)
     await redis.expire(rateKey,3600);
     return {otp,otpSessionId}
 }
 
-module.exports = { generateAndStoreOtp }
+const verifyOTP=async(otp,otpSessionId)=>{
+    const rawData=await redis.get(`opt:session:${otpSessionId}`)
+    if(!rawData) return null;
+
+    const {hashedOtp:storedOtp,meta}=JSON.parse(rawData);
+
+    const attemptsKey=`otp:attempts:${meta.email}`;
+    const attemptsCount=parseInt(await redis.get(attemptsKey)||'0',10);
+    if(attemptsCount>=config.OTP_MAX_VERIFY_ATTEMPT){
+        throw new ToManyRequestsError("too many attemps to verify otp")
+    }
+    const hashedOtp=hmacFor(meta.email,otp);
+
+    if(!crypto.timingSafeEqual(
+        Buffer.from(hashedOtp,'hex'),
+        Buffer.from(storedOtp,'hex')
+    )){
+        await redis.incr(attemptsKey);
+        await redis.expire(attemptsKey,config.OTP_TTL)
+        return null;
+    }
+
+    await redis.del(`opt:session:${otpSessionId}`);
+    await redis.del(`otp:rate:${meta.email}`),
+    await redis.del(attemptsKey);
+    return meta;
+
+}
+
+module.exports = { generateAndStoreOtp,verifyOTP }

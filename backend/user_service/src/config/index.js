@@ -17,7 +17,8 @@ const config={
     HMAC_SECRET:String(process.env.HMAC_SECRET)|| 'hac_secret',
     NODE_MAILEREMAIL_USER:String(process.env.NODE_MAILEREMAIL_USER.trim()),
     NODE_MAILEREMAIL_PASS:String(process.env.NODE_MAILEREMAIL_PASS.trim()),
-    NODE_MAILER_VERIFIED_EMAIL:String(process.env.NODE_MAILER_VERIFIED_EMAIL.trim())
+    NODE_MAILER_VERIFIED_EMAIL:String(process.env.NODE_MAILER_VERIFIED_EMAIL.trim()),
+    OTP_MAX_VERIFY_ATTEMPT:Number(process.env.OTP_MAX_VERIFY_ATTEMPT) || 5
 
 }
 

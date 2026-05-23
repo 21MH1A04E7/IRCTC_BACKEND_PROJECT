@@ -1,28 +1,46 @@
 const bcrypt = require("bcrypt");
 const User = require('../models/user_model')
-const asyncHandler=require('../utils/asyncHandler');
-const { ConflictError } = require('../utils/error');
-const {sendOTPEmail}=require('../utils/email')
-const {generateAndStoreOtp}=require('../utils/otp')
+const { ConflictError, BadRequestError } = require('../utils/error');
+const { sendOTPEmail, verifyOtpEmail} = require('../utils/email')
+const { generateAndStoreOtp, verifyOTP: verifyStoreOTP } = require('../utils/otp')
 
-const sendOTP=async(firstName,lastName,email , password)=>{
+const sendOTP = async (firstName, lastName, email, password) => {
 
-    const existUser=await User.query().select('*').where("email",email).first();
+    const existUser = await User.query().select('*').where("email", email).first();
 
-    if(existUser){
+    if (existUser) {
         throw new ConflictError("user already exists");
     }
 
-    const hashedPassword=await bcrypt.hash(password,10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const meta={firstName,lastName,email,hashedPassword};
-    const {otp,otpSessionId}=await generateAndStoreOtp(meta);
+    const meta = { firstName, lastName, email, hashedPassword };
+    const { otp, otpSessionId } = await generateAndStoreOtp(meta);
     //sync email send
-    await sendOTPEmail(email,otp);
-    console.log(otp,otpSessionId)
-    return {otpSessionId}
+    // await sendOTPEmail(email,otp);
+    console.log(otp, otpSessionId)
+    return { otpSessionId }
 
 }
 
 
-module.exports={sendOTP}
+const verifyOTP = async (otp, otpSessionId) => {
+    const meta = await verifyStoreOTP(otp, otpSessionId);
+    if (meta == null) {
+        throw new BadRequestError("Invalid or expired otp", "OTP_INVALID")
+    }
+    //create the user
+    const user = {
+        firstName: meta.firstName,
+        lastName: meta.lastName,
+        email: meta.email,
+        password: meta.hashedPassword,
+        emailVerified: true
+    }
+
+    await User.query().insert(user)
+    return user
+}
+
+
+module.exports = { sendOTP, verifyOTP }

@@ -23,7 +23,7 @@ const sendOTP = asyncHandler(async (req, res) => {
     }
     const {otpSessionId}= await authService.sendOTP(firstName,lastName,email,password);
 
-    return res.cookie("opt_session",otpSessionId,{
+    return res.cookie("otp_session",otpSessionId,{
         httpOnly:true,
         secure:true,
         sameSite:"strict",
@@ -34,6 +34,22 @@ const sendOTP = asyncHandler(async (req, res) => {
     })
 })
 
+const verifyOTP=asyncHandler(async(req,res)=>{
+    const {otp}=req.body;
+    const otpSessionId=req.cookies.otp_session;
+    console.log(otpSessionId,otp)
+    if(!otp || !otpSessionId){
+        throw new BadRequestError("OTP or otpSessionId is missing");
+    }
+    const user=await authService.verifyOTP(otp,otpSessionId);
+    return res.status(201).json({
+        success:true,
+        message:"user account created succesfully ",
+        meata:user
+    })
+
+})
 module.exports={
-    sendOTP
+    sendOTP,
+    verifyOTP
 }

@@ -18,7 +18,7 @@ class User extends Model {
         firstName: { type: 'string', minLength: 1, maxLength: 255 },
         lastName: { type: ['string', 'null'], maxLength: 255 },
         email: { type: 'string', format: 'email', maxLength: 255 },
-        password:{type:'string',minLength:4,maxLength:50},
+        password:{type:'string',minLength:4,maxLength:225},
         emailVerified: { type: 'boolean', default: false },
         createdAt: { type: 'string', format: 'date-time' },
         updatedAt: { type: 'string', format: 'date-time' },

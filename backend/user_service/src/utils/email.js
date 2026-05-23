@@ -17,7 +17,7 @@ const sendOTPEmail = async (email, otp) => {
         </h2>
 
         <p style="font-size: 16px; color: #555;">
-          Your OTP code is:
+          Your OTP code is for the BACKEND PROJECT
         </p>
 
         <div style="
