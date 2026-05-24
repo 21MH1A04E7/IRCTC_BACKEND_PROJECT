@@ -2,7 +2,11 @@ const bcrypt = require("bcrypt");
 const User = require('../models/user_model')
 const { ConflictError, BadRequestError } = require('../utils/error');
 const { sendOTPEmail, verifyOtpEmail} = require('../utils/email')
-const { generateAndStoreOtp, verifyOTP: verifyStoreOTP } = require('../utils/otp')
+const { generateAndStoreOtp, verifyOTP: verifyStoreOTP } = require('../utils/otp');
+const { generateAccessToken, generateRefreshToken } = require("../utils/auth");
+const jwt  = require("jsonwebtoken");
+const { config } = require("../config");
+const {redis} = require("../config/redis");
 
 const sendOTP = async (firstName, lastName, email, password) => {
 
@@ -17,7 +21,7 @@ const sendOTP = async (firstName, lastName, email, password) => {
     const meta = { firstName, lastName, email, hashedPassword };
     const { otp, otpSessionId } = await generateAndStoreOtp(meta);
     //sync email send
-    await sendOTPEmail(email,otp);
+    // await sendOTPEmail(email,otp);
     console.log(otp, otpSessionId)
     return { otpSessionId }
 
@@ -39,9 +43,30 @@ const verifyOTP = async (otp, otpSessionId) => {
     }
 
     await User.query().insert(user)
-    await verifyOtpEmail(meta)
+    // await verifyOtpEmail(meta)
     return user
 }
 
+const login=async(email,password,deviceId)=>{
+    const user = await User.query().where('email', email).first();
+    if (!user) {
+        throw new BadRequestError("Email not found");
+    }
+    const mathPassword=await bcrypt.compare(password,user.password);
+    if(!mathPassword){
+        throw new BadRequestError("Password is worng ,pls try again");
+    }
 
-module.exports = { sendOTP, verifyOTP }
+    // console.log("user--------->",user)
+    const accessToken=generateAccessToken(user.id)
+    const refreshToken=generateRefreshToken(user.id)
+
+    const {jti}=jwt.decode(refreshToken)
+    await redis.set(`refresh:${user.id}:${deviceId}`,jti,'EX',config.REFRESH_TOKEN_EXP_SEC);
+    const {password:_passoword,...safeUser}=user;
+    await redis.set(`user:${user.id}`,JSON.stringify(safeUser),'EX',config.REDIS_USER_TTL)
+   return {accessToken,refreshToken,loggedInUser:safeUser}
+    
+}
+
+module.exports = { sendOTP, verifyOTP,login }
