@@ -1,5 +1,5 @@
 const asyncHandler=require('../utils/asyncHandler');
-const { BadRequestError } = require('../utils/error');
+const { BadRequestError, UnauthorizedError } = require('../utils/error');
 const authService=require('../services/auth_services')
 const {config}=require('../config')
 const Joi=require('joi');
@@ -80,11 +80,33 @@ const login=asyncHandler(async(req,res)=>{
         message:"user login successfully",
         loggedInUser
     })
-
+})
+const rotateRefreshToken = asyncHandler(async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+        throw new UnauthorizedError("Refresh token is missing", "LOGIN_AGAIN");
+    }
+    const deviceId = getDeviceFringerprint(req);
+    const { newAccessToken, newRefreshToken } = await authService.rotateRefreshToken(refreshToken, deviceId);
+    res.cookie("accessToken", newAccessToken, cookieOptions(config.ACCESS_TOKEN_EXP_SEC * 1000))
+    res.cookie("refreshToken", newRefreshToken, cookieOptions(config.REFRESH_TOKEN_EXP_SEC * 1000))
+        .status(200).json({
+            success: true,
+            message: "Access and Refresh token reissued"
+        })
 
 })
+
+const cookieOptions = (maxAge) => ({
+     httpOnly: true,
+     secure: true,
+     sameSite:  'strict',
+     maxAge,
+});
+
 module.exports={
     sendOTP,
     verifyOTP,
-    login
+    login,
+    rotateRefreshToken
 }

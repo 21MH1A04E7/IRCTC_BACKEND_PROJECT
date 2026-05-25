@@ -1,9 +1,9 @@
 const bcrypt = require("bcrypt");
 const User = require('../models/user_model')
-const { ConflictError, BadRequestError } = require('../utils/error');
+const { ConflictError, BadRequestError, ForbiddenError } = require('../utils/error');
 const { sendOTPEmail, verifyOtpEmail} = require('../utils/email')
 const { generateAndStoreOtp, verifyOTP: verifyStoreOTP } = require('../utils/otp');
-const { generateAccessToken, generateRefreshToken } = require("../utils/auth");
+const { generateAccessToken, generateRefreshToken, verfiyRefreshToken } = require("../utils/auth");
 const jwt  = require("jsonwebtoken");
 const { config } = require("../config");
 const {redis} = require("../config/redis");
@@ -69,4 +69,24 @@ const login=async(email,password,deviceId)=>{
     
 }
 
-module.exports = { sendOTP, verifyOTP,login }
+const rotateRefreshToken=async(refreshToken,deviceId)=>{
+    const payload=verfiyRefreshToken(refreshToken);
+    const {id:userId,jti}=payload;
+    const storedJti=await redis.get(`refresh:${userId}:${deviceId}`);
+    if(!storedJti){
+        throw new ForbiddenError("Session Expired","LOGIN AGAIN");
+    }
+    if(storedJti!==jti){
+        await redis.del(`refresh:${userId}:${deviceId}`);
+        throw new ForbiddenError("Refresh Token reused","LOGIN AGAIN");
+    }
+    const newAccessToken=generateAccessToken(payload.id);
+    const newRefreshToken=generateRefreshToken(payload.id);
+    const {jti:newJti}=jwt.decode(newRefreshToken);
+    await redis.set(`refresh:${userId}:${deviceId}`,newJti,'EX',
+        config.REFRESH_TOKEN_EXP_SEC);
+
+    return {newAccessToken,newRefreshToken};
+}
+
+module.exports = { sendOTP, verifyOTP,login,rotateRefreshToken }
