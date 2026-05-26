@@ -73,10 +73,13 @@ const rotateRefreshToken=async(refreshToken,deviceId)=>{
     const payload=verfiyRefreshToken(refreshToken);
     const {id:userId,jti}=payload;
     const storedJti=await redis.get(`refresh:${userId}:${deviceId}`);
+    // console.log("comming")
     if(!storedJti){
         throw new ForbiddenError("Session Expired","LOGIN AGAIN");
     }
+    // console.log("stored",storedJti,jti)
     if(storedJti!==jti){
+        // console.log("jti------------->",jti)
         await redis.del(`refresh:${userId}:${deviceId}`);
         throw new ForbiddenError("Refresh Token reused","LOGIN AGAIN");
     }

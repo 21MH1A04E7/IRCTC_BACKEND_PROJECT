@@ -92,7 +92,8 @@ const rotateRefreshToken = asyncHandler(async (req, res) => {
     res.cookie("refreshToken", newRefreshToken, cookieOptions(config.REFRESH_TOKEN_EXP_SEC * 1000))
         .status(200).json({
             success: true,
-            message: "Access and Refresh token reissued"
+            error:false,
+            message: "Access and Refresh token generated"
         })
 
 })
