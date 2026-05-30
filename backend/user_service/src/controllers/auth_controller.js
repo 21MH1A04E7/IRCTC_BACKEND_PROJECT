@@ -102,7 +102,7 @@ const verifyGoogleIdToken=asyncHandler(async(req,res)=>{
     const {idToken}=req.body;
     if(!idToken) 
         throw new BadRequestError("Invalid Google Id Token","INVALID_TOKEN");
-
+    console.log("request---------------->")
     const deviceId=await getDeviceFringerprint(req)
     const {accessToken,refreshToken,loggedInUser}=await authService.verifyGoogleIdToken(idToken,deviceId);
     res.cookie("accessToken", accessToken, cookieOptions(config.ACCESS_TOKEN_EXP_SEC * 1000))

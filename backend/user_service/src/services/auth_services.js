@@ -102,6 +102,7 @@ const verifyGoogleIdToken=async(idToken,deviceId)=>{
     })
 
     const payload=ticket.getPayload();
+    console.log("gogole payload",payload)
     if(!payload.sub || !payload.email){
         throw new UnauthorizedError("Invalid Google token payload");
     }
@@ -114,23 +115,33 @@ const verifyGoogleIdToken=async(idToken,deviceId)=>{
         lastName:payload.family_name,
         emailVerified:payload.email_verified || false
     }
-   
-    const user=await User.transaction(async(trx)=>{
+    console.log("google user",googleUser)
+    let user={}
+    await User.transaction(async(trx)=>{
+        // console.log("log2========>")
         let googleAuth=await AuthProvider.query(trx)
         .withGraphFetched('user')
         .where('provider',googleUser.provider)
         .andWhere('providerId',googleUser.prividerId)
+        .first()
+        // console.log("log3======>",googleAuth)
+        //already user has create the account through google auth
         if(googleAuth){
-            return googleUser.user;
+            user= googleAuth.user;
+            return;
         }
-        let existUser=await User.query(trx).where('email',googleUser.email);
+        console.log('log1======>')
+        let existUser=await User.query(trx).where('email',googleUser.email).first();
+        console.log(existUser)
+        //user already created singin manually
         if(existUser){
             await AuthProvider.query(trx).insert({
-                provider:googleAuth.provider,
-                providerId:googleAuth.providerId,
+                provider:googleUser.provider,
+                providerId:googleUser.prividerId,
                 userId:existUser.id
             })
-            return existUser;
+            user= existUser;
+            return;
         }
 
         const newuser=await User.query(trx).insertAndFetch({
@@ -138,13 +149,14 @@ const verifyGoogleIdToken=async(idToken,deviceId)=>{
             firstName:googleUser.firstName,
             lastName:googleUser.lastName,
             emailVerified:googleUser.emailVerified
-        })
+        }).first()
         await AuthProvider.query(trx).insert({
-            provider:googleUser.privider,
-            providerId:googleUser.providerId,
+            provider:googleUser.provider,
+            providerId:googleUser.prividerId,
             userId:newuser.id
         })
-        return newuser
+        user= newuser
+        return;
     })
     const accessToken=generateAccessToken(user.id);
     const refreshToken=generateRefreshToken(user.id);
