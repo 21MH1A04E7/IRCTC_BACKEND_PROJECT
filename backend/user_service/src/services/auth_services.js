@@ -1,12 +1,14 @@
 const bcrypt = require("bcrypt");
 const User = require('../models/user_model')
-const { ConflictError, BadRequestError, ForbiddenError } = require('../utils/error');
+const { ConflictError, BadRequestError, ForbiddenError, UnauthorizedError } = require('../utils/error');
 const { sendOTPEmail, verifyOtpEmail} = require('../utils/email')
 const { generateAndStoreOtp, verifyOTP: verifyStoreOTP } = require('../utils/otp');
 const { generateAccessToken, generateRefreshToken, verfiyRefreshToken } = require("../utils/auth");
 const jwt  = require("jsonwebtoken");
 const { config } = require("../config");
 const {redis} = require("../config/redis");
+const { OAuth2Client } = require("google-auth-library");
+const AuthProvider = require("../models/auth_provider");
 
 const sendOTP = async (firstName, lastName, email, password) => {
 
@@ -92,4 +94,66 @@ const rotateRefreshToken=async(refreshToken,deviceId)=>{
     return {newAccessToken,newRefreshToken};
 }
 
-module.exports = { sendOTP, verifyOTP,login,rotateRefreshToken }
+const verifyGoogleIdToken=async(idToken,deviceId)=>{
+    const client=new OAuth2Client(config.GOOGLE_CLIENT_ID)
+    const ticket=await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID
+    })
+
+    const payload=ticket.getPayload();
+    if(!payload.sub || !payload.email){
+        throw new UnauthorizedError("Invalid Google token payload");
+    }
+
+    const googleUser= {
+        provider:payload.iss,
+        prividerId:payload.sub,
+        email:payload.email,
+        firstName:payload.given_name,
+        lastName:payload.family_name,
+        emailVerified:payload.email_verified || false
+    }
+   
+    const user=await User.transaction(async(trx)=>{
+        let googleAuth=await AuthProvider.query(trx)
+        .withGraphFetched('user')
+        .where('provider',googleUser.provider)
+        .andWhere('providerId',googleUser.prividerId)
+        if(googleAuth){
+            return googleUser.user;
+        }
+        let existUser=await User.query(trx).where('email',googleUser.email);
+        if(existUser){
+            await AuthProvider.query(trx).insert({
+                provider:googleAuth.provider,
+                providerId:googleAuth.providerId,
+                userId:existUser.id
+            })
+            return existUser;
+        }
+
+        const newuser=await User.query(trx).insertAndFetch({
+            email:googleUser.email,
+            firstName:googleUser.firstName,
+            lastName:googleUser.lastName,
+            emailVerified:googleUser.emailVerified
+        })
+        await AuthProvider.query(trx).insert({
+            provider:googleUser.privider,
+            providerId:googleUser.providerId,
+            userId:newuser.id
+        })
+        return newuser
+    })
+    const accessToken=generateAccessToken(user.id);
+    const refreshToken=generateRefreshToken(user.id);
+
+    const {jti}=jwt.decode(refreshToken)
+    await redis.set(`refresh:${user.id}:${deviceId}`,jti,'EX',config.REFRESH_TOKEN_EXP_SEC);
+    const {password:_passoword,...safeUser}=user;
+    await redis.set(`user:${user.id}`,JSON.stringify(safeUser),'EX',config.REDIS_USER_TTL)
+    
+    return {accessToken,refreshToken,loggedInUser:safeUser};
+}
+module.exports = { sendOTP, verifyOTP,login,rotateRefreshToken ,verifyGoogleIdToken}

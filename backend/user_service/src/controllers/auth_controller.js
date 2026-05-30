@@ -98,6 +98,22 @@ const rotateRefreshToken = asyncHandler(async (req, res) => {
 
 })
 
+const verifyGoogleIdToken=asyncHandler(async(req,res)=>{
+    const {idToken}=req.body;
+    if(!idToken) 
+        throw new BadRequestError("Invalid Google Id Token","INVALID_TOKEN");
+
+    const deviceId=await getDeviceFringerprint(req)
+    const {accessToken,refreshToken,loggedInUser}=await authService.verifyGoogleIdToken(idToken,deviceId);
+    res.cookie("accessToken", accessToken, cookieOptions(config.ACCESS_TOKEN_EXP_SEC * 1000))
+    res.cookie("refreshToken", refreshToken, cookieOptions(config.REFRESH_TOKEN_EXP_SEC * 1000))
+        .status(200).json({
+            success: true,
+            error:false,
+            data:loggedInUser,
+            message: "login successfully"
+        })
+})
 const cookieOptions = (maxAge) => ({
      httpOnly: true,
      secure: true,
@@ -109,5 +125,6 @@ module.exports={
     sendOTP,
     verifyOTP,
     login,
-    rotateRefreshToken
+    rotateRefreshToken,
+    verifyGoogleIdToken
 }

@@ -25,7 +25,20 @@ class User extends Model {
       },
     };
   }
+  static get relationMappings() {
+    const AuthProvider = require("./auth_provider");
 
+    return {
+      AuthProviders: {
+        relation: Model.HasManyRelation,
+        modelClass: AuthProvider,
+        join: {
+          from: "User.id",
+          to: "AuthProvider.userId",
+        },
+      },
+    };
+  }
   $beforeUpdate() {
     this.updatedAt = new Date();
   }
