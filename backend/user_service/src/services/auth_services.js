@@ -9,6 +9,7 @@ const { config } = require("../config");
 const {redis} = require("../config/redis");
 const { OAuth2Client } = require("google-auth-library");
 const AuthProvider = require("../models/auth_provider");
+const notification_producer = require("../kafka/producer/notification_producer");
 
 const sendOTP = async (firstName, lastName, email, password) => {
 
@@ -23,7 +24,9 @@ const sendOTP = async (firstName, lastName, email, password) => {
     const meta = { firstName, lastName, email, hashedPassword };
     const { otp, otpSessionId } = await generateAndStoreOtp(meta);
     //sync email send
+    await notification_producer.sendOtpEmail(email,otp,(config.OTP_TTL)/60)
     // await sendOTPEmail(email,otp);
+    
     console.log(otp, otpSessionId)
     return { otpSessionId }
 
