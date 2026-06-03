@@ -26,6 +26,14 @@ const getProfile=async(userId)=>{
     return safeUser;
 }
 
+const deleteProfile=async(userId)=>{
+    //delete user from database
+    await User.query().where('id',userId).delete();
+    //delete user from redis
+    await redis.del(`user:${userId}`);
+}
+
 module.exports={
-    getProfile
+    getProfile,
+    deleteProfile
 }

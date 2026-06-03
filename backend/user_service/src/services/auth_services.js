@@ -49,7 +49,7 @@ const verifyOTP = async (otp, otpSessionId) => {
 
     await User.query().insert(user)
     // await verifyOtpEmail(meta)
-    await notification_producer.sendWelcomeEmail(meta.email,meta.firstName)
+     notification_producer.sendWelcomeEmail(meta.email,meta.firstName)
     return user
 }
 
