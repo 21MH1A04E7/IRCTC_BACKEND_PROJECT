@@ -48,8 +48,8 @@ const verifyOTP = async (otp, otpSessionId) => {
     }
 
     await User.query().insert(user)
-    // await verifyOtpEmail(meta)
-     notification_producer.sendWelcomeEmail(meta.email,meta.firstName)
+    // async commution for the notification service
+    notification_producer.sendWelcomeEmail(meta.email,meta.firstName)
     return user
 }
 
