@@ -9,6 +9,7 @@ const errorHandler = require('./middlewares/error_middleware');
 const { notFound } = require('./middlewares/notFound_middleware');
 const reqLogger = require('./middlewares/req_middlware');
 const corsMiddleware = require('./middlewares/cors_middleware');
+const router=require('./routes/index')
 
 const app = express();
 
@@ -28,14 +29,7 @@ if (config.NODE_ENV === 'development') {
      app.use(morgan('dev'));
 }
 
-app.get('/health', (req, res) => {
-     res.status(200).json({
-          success: true,
-          message: 'API Gateway is running',
-          timestamp: new Date().toISOString(),
-          environment: config.NODE_ENV,
-     });
-});
+app.use('/api',router)
 
 
 
