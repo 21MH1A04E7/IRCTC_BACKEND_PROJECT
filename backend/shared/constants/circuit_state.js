@@ -1,5 +1,5 @@
 const ciruitState=Object.freeze({
-    CLOSE:'CLOSE',
+    CLOSED:'CLOSED',
     OPEN:'OPEN',
     HALF_OPEN:'HALF_OPEN'
 })
