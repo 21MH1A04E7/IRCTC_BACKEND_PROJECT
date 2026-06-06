@@ -55,5 +55,8 @@ class CiruitBreaker {
             nextAttempt:this.nextAttempt
         }
     }
+}
 
+const circuitBreaker={
+    userService:new CiruitBreaker('user_service');
 }
