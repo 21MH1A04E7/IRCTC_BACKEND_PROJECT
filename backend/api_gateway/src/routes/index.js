@@ -1,6 +1,8 @@
 const express=require('express')
 const {config}=require('../config');
 const { requireAuth } = require('../middlewares/auth_middleware');
+const { createProxy } = require('../services/proxy');
+
 
 
 
@@ -9,15 +11,15 @@ const { requireAuth } = require('../middlewares/auth_middleware');
 const router=express.Router();
 
 
-// const userServiceProxy=createProxy('','')
+const userServiceProxy=createProxy('userService',config.USER_SERVICE_URL)
 
 
 //public route
 
-// router.post(
-//     'users/auth/login',
-//     userServiceProxy
-// )
+router.post(
+    '/users/auth/login',
+    userServiceProxy
+)
 
 
 //private route
