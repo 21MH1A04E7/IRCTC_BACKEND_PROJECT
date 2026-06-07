@@ -18,17 +18,18 @@ const userServiceProxy=createProxy('userService',config.USER_SERVICE_URL)
 
 router.post(
     '/users/auth/login',
+    requireAuth,
     userServiceProxy
 )
 
 
-//private route
+// private route
 
-// router.post(
-//     'users/user/profile',
-//     requireAuth,
-//     userServiceProxy
-// )
+router.post(
+    '/users/user/profile',
+    requireAuth,
+    userServiceProxy
+)
 
 router.get('/health', (req, res) => {
     res.status(200).json({
