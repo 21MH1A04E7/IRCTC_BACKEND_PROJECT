@@ -1,0 +1,90 @@
+const logger = require('../config/logger')
+const { ToManyRequestsError } = require('../utils/error')
+const {redis}=require('../config/redis')
+
+
+// using sliding window rate limiter for the windowMs
+async function rateLimiter(key,maxRequests,windowMs){
+    const now=Date.now();
+    const windowStart=now - windowMs;
+    try{
+        const pipeline=redis.pipeline();
+
+        // Remove old entries outside the current window
+        pipeline.zremrangebyscore(key, 0, windowStart);
+
+        // Add current request
+        pipeline.zadd(key, now, `${now}-${Math.random()}`);
+
+        // Count requests in current window
+        pipeline.zcard(key);
+
+        //set expiry on the key
+        pipeline.expire(key, Math.ceil(windowMs / 1000));
+
+        const results = await pipeline.exec();
+
+        // Get the count from the third command (index 2)
+        const requestCount = results[2][1];
+
+        if (requestCount > maxRequests) {
+               const oldestRequest = await redis.zrange(key, 0, 0, 'WITHSCORES');
+               const resetTime = parseInt(oldestRequest[1]) + windowMs;
+               const retryAfter = Math.ceil((resetTime - now) / 1000);
+
+               return {
+                    allowed: false,
+                    remaining: 0,
+                    resetTime,
+                    retryAfter,
+               };
+          }
+
+          return {
+               allowed: true,
+               remaining: maxRequests - requestCount,
+               resetTime: windowStart + windowMs,
+          };
+
+    }catch(error){
+        logger.error('Rate limiter error:', err);
+          // Fail open - allow request if Redis is down
+          return { allowed: true, remaining: maxRequests };
+
+    }
+
+}
+
+function endPointRateLimit(maxRequest, windownMs) {
+
+    return async (req, res, next) => {
+        const ip = req.ip || req.connection.remoteAddress;
+        const endpoint = `${req.method}:${req.path}`;
+        // form key for the ratelimit
+        const key = `ratelimit:endPoint:${endpoint}:${ip}`;
+
+        logger.info(`rate limter key: ${key}`)
+        const result = await rateLimiter(key, maxRequest, windownMs);
+
+        //set header for the ratelimit
+        res.setHeader('X-RateLimit-Limit', maxRequests);
+        res.setHeader('X-RateLimit-Remaining', result.remaining);
+        res.setHeader('X-RateLimit-Reset', new Date(result.resetTime).toISOString());
+
+        if (!result.allowed) {
+            res.setHeader('Retry-After', result.retryAfter);
+            logger.warn(`Endpoint rate limit exceeded for the ${endpoint} from the IP ${ip}`)
+            return next(
+                new ToManyRequestsError(
+                    `Too many requests to this endpoint. Please try again in ${result.retryAfter} seconds`,
+                    result.retryAfter)
+                )
+        }
+        next();
+    }
+}
+
+
+module.exports = {
+    endPointRateLimit
+}
