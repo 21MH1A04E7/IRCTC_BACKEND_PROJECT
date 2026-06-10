@@ -1,6 +1,7 @@
 const logger = require('../config/logger')
 const { ToManyRequestsError } = require('../utils/error')
 const {redis}=require('../config/redis')
+const {config}=require('../config/index')
 
 
 // using sliding window rate limiter for the windowMs
@@ -67,7 +68,7 @@ function endPointRateLimit(maxRequest, windownMs) {
         const result = await rateLimiter(key, maxRequest, windownMs);
 
         //set header for the ratelimit
-        res.setHeader('X-RateLimit-Limit', maxRequests);
+        res.setHeader('X-RateLimit-Limit', maxRequest);
         res.setHeader('X-RateLimit-Remaining', result.remaining);
         res.setHeader('X-RateLimit-Reset', new Date(result.resetTime).toISOString());
 
@@ -84,7 +85,38 @@ function endPointRateLimit(maxRequest, windownMs) {
     }
 }
 
+function ipRateLimit(options={}){
+    const maxRequests=options.max || config.RATE_LIMIT_MAX_REQUESTS;
+    const windowMs=options.windowMs || config.RATE_LIMIT_WINDOW_MS;
+
+    return async (req,res,next)=>{
+        const ip=req.ip || req.connection.remoteAddress;
+        const key=`ratelimit:ip:${ip}`;
+
+        const result=await rateLimiter(key,maxRequests,windowMs);
+
+        // set the header for the rate limiter
+        res.setHeader('X-RateLimit-Limit', maxRequests);
+        res.setHeader('X-RateLimit-Remaining', result.remaining);
+        res.setHeader('X-RateLimit-Reset', new Date(result.resetTime).toISOString());
+
+        if(!result.allowed){
+            res.setHeader('Retry-After', result.retryAfter);
+            logger.warn(`Rate limit exceeded for IP: ${ip}`);
+            return next(
+                new TooManyRequestsError(
+                    `Too many requests. Please try again in ${result.retryAfter} seconds`,
+                    result.retryAfter
+                )
+            );
+        }
+        next();
+    }
+}
+
+
 
 module.exports = {
-    endPointRateLimit
+    endPointRateLimit,
+    ipRateLimit
 }

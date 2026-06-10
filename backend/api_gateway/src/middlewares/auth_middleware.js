@@ -18,7 +18,7 @@ function requireAuth(req, res, next) {
 
         //if the token is missing
         if (!accessToken) {
-            throw new UnauthorizedError("Authorization token is missiong", 'AUTH_MISSING')
+            throw new UnauthorizedError("Authorization token is missing", 'AUTH_MISSING')
         }
 
         const payload = jwt.verify(accessToken, config.JWT_ACCESS_SECRET);
