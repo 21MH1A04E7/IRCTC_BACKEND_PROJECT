@@ -23,12 +23,14 @@ class Seat extends Model {
           enum: ["LOWER", "MIDDLE", "UPPER", "SIDE_LOWER", "SIDE_UPPER"],
         },
         price: { type: "number" },
+        created_at: { type: "string", format: "date-time" },
+        updated_at: { type: "string", format: "date-time" },
       },
     };
   }
 
   static get relationMappings() {
-    const Train = require("./train");
+    const Train = require("./Train");
 
     return {
       train: {
@@ -36,7 +38,7 @@ class Seat extends Model {
         modelClass: Train,
         join: {
           from: "seats.train_id",
-          to: "trains.id",
+          to: "train.id",
         },
       },
     };

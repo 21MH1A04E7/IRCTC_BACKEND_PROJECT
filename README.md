@@ -10,5 +10,7 @@
 
 4.Run specific migration: npx knex migrate:up migration_file_name
 
+5.Check all the Migration List: npx knex migrate list
+
 #user servive started
 
