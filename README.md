@@ -1,4 +1,4 @@
-# IRCTC_BACKEND_PROJECT
+# BOOKING_SYSTEM
 
 #migration command ( knex)
 
