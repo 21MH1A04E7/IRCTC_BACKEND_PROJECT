@@ -64,18 +64,8 @@ const login=asyncHandler(async(req,res)=>{
     const deviceId=await getDeviceFringerprint(req);
     console.log("device id",deviceId)
     const {accessToken,refreshToken,loggedInUser}=await authService.login(email,password,deviceId);
-    res.cookie("accessToken",accessToken,{
-        httpOnly:true,
-        secure:true,
-        sameSite:"strict",
-        maxAge:config.ACCESS_TOKEN_EXP_SEC*1000
-    })
-    res.cookie("refreshToken",refreshToken,{
-        httpOnly:true,
-        secure:true,
-        sameSite:"strict",
-        maxAge:config.REFRESH_TOKEN_EXP_SEC*1000
-    }).status(200).json({
+    res.cookie("accessToken",accessToken,cookieOptions(config.ACCESS_TOKEN_EXP_SEC*1000))
+    res.cookie("refreshToken",refreshToken,cookieOptions(config.REFRESH_TOKEN_EXP_SEC*1000)).status(200).json({
         success:true,
         message:"user login successfully",
         loggedInUser

@@ -12,6 +12,8 @@ const corsMiddleware  = require('./middlewares/cors_middleware');
 const errorMiddleware = require('./middlewares/error_middleware');
 const reqLogger  = require('./middlewares/req_middleware');
 
+const stationRoutes=require('../src/routes/station_route')
+
 
 const app = express();
 
@@ -48,6 +50,7 @@ app.get('/health', (req, res) => {
 });
 
 
+app.use("/stations", stationRoutes);
 
 // Error handler (must be last)
 app.use(errorMiddleware);
