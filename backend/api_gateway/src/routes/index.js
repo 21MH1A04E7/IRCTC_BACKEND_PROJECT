@@ -2,7 +2,8 @@ const express=require('express')
 const {config}=require('../config');
 const { requireAuth } = require('../middlewares/auth_middleware');
 const { createProxy } = require('../services/proxy');
-const {endPointRateLimit,ipRateLimit}=require('../middlewares/rateLimiting_middleware')
+const {endPointRateLimit,ipRateLimit}=require('../middlewares/rateLimiting_middleware');
+
 
 
 
@@ -13,6 +14,7 @@ const router=express.Router();
 
 
 const userServiceProxy=createProxy('userService',config.USER_SERVICE_URL)
+const adminServiceProxy=createProxy('adminService',config.ADMIN_SERVICE_URL)
 
 
 //public route
@@ -33,6 +35,16 @@ router.post(
     userServiceProxy
 )
 
+
+// admin service
+
+router.post(
+    '/admin/stations/station',
+    endPointRateLimit(5,3000000),
+    requireAuth,
+    adminServiceProxy
+    
+)
 router.get('/health', (req, res) => {
     res.status(200).json({
          success: true,

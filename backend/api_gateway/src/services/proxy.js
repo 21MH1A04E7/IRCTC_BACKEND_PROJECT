@@ -61,7 +61,8 @@ class CircuitBreaker {
 }
 
 const circuitBreakers = {
-    userService: new CircuitBreaker('user_service')
+    userService: new CircuitBreaker('user_service'),
+    adminService:new CircuitBreaker('amin_service')
 }
 
 function createProxy(serviceName, serviceUrl) {
