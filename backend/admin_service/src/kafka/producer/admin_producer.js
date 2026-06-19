@@ -47,6 +47,14 @@ class AdminProducer {
           );
      }
 
+     async publishTrainCreated(train) {
+          return this.sendMessage(
+               KAFKA_TOPICS.TRAIN_CREATED,
+               `train-${train.id}`,
+               { eventType: 'TRAIN_CREATED', data: train, timestamp: new Date().toISOString() }
+          );
+     }
+
 }
 
 module.exports = new AdminProducer();

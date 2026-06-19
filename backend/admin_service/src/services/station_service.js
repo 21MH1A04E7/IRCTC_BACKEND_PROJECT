@@ -1,4 +1,3 @@
-const db = require('../db/knex');
 const { ConflictError } = require('../utils/error');
 const Station = require('../models/station');
 const adminProducer=require('../kafka/producer/admin_producer')
