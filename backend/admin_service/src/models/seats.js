@@ -30,7 +30,7 @@ class Seat extends Model {
   }
 
   static get relationMappings() {
-    const Train = require("./Train");
+    const Train = require("./train");
 
     return {
       train: {
