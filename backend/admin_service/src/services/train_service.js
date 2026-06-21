@@ -30,7 +30,7 @@ const createTrain = async (data) => {
             total_seats: seats.length,
         });
 
-        await Seat.query(trx).insert(
+        await trx(Seat.tableName).insert(
             seats.map((seat) => ({
                 train_id: insertedTrain.id,
                 seat_number: seat.seat_number,

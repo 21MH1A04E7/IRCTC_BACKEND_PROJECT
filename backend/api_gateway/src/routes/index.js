@@ -45,6 +45,14 @@ router.post(
     adminServiceProxy
     
 )
+
+router.post(
+    '/admin/trains/train',
+    requireAuth,
+    adminServiceProxy
+    
+)
+
 router.get('/health', (req, res) => {
     res.status(200).json({
          success: true,

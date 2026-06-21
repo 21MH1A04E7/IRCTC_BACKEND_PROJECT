@@ -6,7 +6,7 @@ const trainService = require('../services/train_service');
 const createTrainSchema = Joi.object({
     train_number: Joi.alternatives().try(Joi.string(), Joi.number()).required(),
     train_name: Joi.string().min(3).max(255).required(),
-    coach_name: Joi.string().min(2).max(225),
+    coach_name: Joi.string().min(2).max(225).default('AC'),
     seats: Joi.array()
         .items(
             Joi.object({

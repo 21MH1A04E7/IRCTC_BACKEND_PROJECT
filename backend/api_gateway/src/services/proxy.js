@@ -89,6 +89,12 @@ function createProxy(serviceName, serviceUrl) {
                 req.headers,
                 circuitBreaker
             )
+
+            const setCookies = result.headers?.['set-cookie'];
+            if (setCookies?.length) {
+                res.setHeader('Set-Cookie', setCookies);
+            }
+
             return res.status(result.status).json(result.data)
 
         } catch (error) {
