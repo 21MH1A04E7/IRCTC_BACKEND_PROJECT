@@ -21,6 +21,23 @@ const createTrainSchema = Joi.object({
         .required(),
 });
 
+
+const createRouteSchema = Joi.object({
+    train_id: Joi.number().integer().required(),
+    stations: Joi.array()
+        .items(
+            Joi.object({
+                station_id: Joi.number().integer().required(),
+                sequence_number: Joi.number().integer().min(1).required(),
+                arrival_time: Joi.string().allow(null).optional(),
+                departure_time: Joi.string().allow(null).optional(),
+                distance_from_origin: Joi.number().optional(),
+            })
+        )
+        .min(2)
+        .required(),
+});
+
 exports.createTrain = asyncHandler(async (req, res) => {
     const { error, value } = createTrainSchema.validate(req.body);
     if (error) {
@@ -40,5 +57,21 @@ exports.createTrain = asyncHandler(async (req, res) => {
         success: true,
         message: 'Train added successfully',
         data: train,
+    });
+});
+
+exports.createRoute = asyncHandler(async (req, res) => {
+    const { error, value } = createRouteSchema.validate(req.body);
+
+    if (error) {
+        throw new BadRequestError(error.details.map((d) => d.message).join(', '));
+    }
+
+    const route = await trainService.createRoute(value);
+    
+    return res.status(201).json({
+         success: true,
+         message: "Route Created",
+         data: route
     });
 });

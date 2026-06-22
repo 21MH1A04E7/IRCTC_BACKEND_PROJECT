@@ -28,7 +28,7 @@ class RouteStation extends Model {
 
   static get relationMappings() {
     const Route = require("./routes");
-    const Station = require("./seats");
+    const Station = require("./station");
 
     return {
       route: {
@@ -45,7 +45,7 @@ class RouteStation extends Model {
         modelClass: Station,
         join: {
           from: "route_stations.station_id",
-          to: "stations.id",
+          to: "station.id",
         },
       },
     };

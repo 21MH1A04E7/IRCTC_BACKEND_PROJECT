@@ -6,6 +6,7 @@ const KAFKA_TOPICS=Object.freeze({
      WELCOME_EMAIL: 'notification-welcome-email',
      STATION_CREATED:'station_created',
      TRAIN_CREATED: 'train_created',
+     ROUTE_CREATED: 'route_created',
 
 })
 

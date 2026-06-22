@@ -55,6 +55,14 @@ class AdminProducer {
           );
      }
 
+     async publishRouteCreated(route) {
+          return this.sendMessage(
+               KAFKA_TOPICS.ROUTE_CREATED,
+               `route-${route.id}`,
+               { eventType: 'ROUTE_CREATED', data: route, timestamp: new Date().toISOString() }
+          );
+     }
+
 }
 
 module.exports = new AdminProducer();
