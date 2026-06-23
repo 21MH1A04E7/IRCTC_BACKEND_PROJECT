@@ -59,27 +59,27 @@ const createTrain = async (data) => {
 };
 
 const createRoute = async (data) => {
-    
+
     const { train_id, stations } = data;
 
-    const train =await Train.query().where('id',train_id).first()
+    const train = await Train.query().where('id', train_id).first()
 
     if (!train) {
-         throw new NotFoundError('Train not found');
+        throw new NotFoundError('Train not found');
     }
 
-    const existingRoute = await Route.query().where('train_id',train_id).first();
+    const existingRoute = await Route.query().where('train_id', train_id).first();
 
     if (existingRoute) {
-         throw new ConflictError("Route already exists for this train")
+        throw new ConflictError("Route already exists for this train")
     }
 
     const station_ids = stations.map((station) => station.station_id);
 
-    const existingStations = await Station.query().whereIn('id',station_ids)
+    const existingStations = await Station.query().whereIn('id', station_ids)
 
     if (existingStations.length !== station_ids.length) {
-         throw new BadRequestError('One or more station IDs are invalid');
+        throw new BadRequestError('One or more station IDs are invalid');
     }
 
     const sorted = [...stations].sort((a, b) => a.sequence_number - b.sequence_number);
@@ -91,7 +91,7 @@ const createRoute = async (data) => {
     }
 
     const route = await Route.transaction(async (trx) => {
-        
+
         const insertedRoute = await Route.query(trx).insertAndFetch({ train_id });
 
         await trx(RouteStation.tableName).insert(
@@ -126,4 +126,40 @@ const createRoute = async (data) => {
     return routeWithStations;
 };
 
-module.exports = { createTrain,createRoute };
+
+const getAllTrains = async () => {
+
+    const data = await Train.query().withGraphFetched(`[
+        seats,
+        routes.routeStations.station
+        ]`)
+        .modifyGraph('seats', builder => {
+            builder.orderBy('seat_number', 'asc');
+        })
+        .modifyGraph('route.routeStations', builder => {
+            builder.orderBy('sequence_number', 'asc');
+        })
+        .orderBy('train_number', 'asc');
+
+    return data;
+};
+
+const getTrainById = async (id) => {
+    const train = await Train.query()
+        .findById(id)
+        .withGraphFetched(`[
+        seats,
+        routes.routeStations.station
+        ]`)
+        .modifyGraph('seats', builder => {
+            builder.orderBy('seat_number', 'asc');
+        })
+        .modifyGraph('route.routeStations', builder => {
+            builder.orderBy('sequence_number', 'asc');
+        })
+        .orderBy('train_number', 'asc');
+
+    if (!train) throw new NotFoundError('Train not found');
+    return train;
+};
+module.exports = { createTrain, createRoute, getAllTrains, getTrainById };

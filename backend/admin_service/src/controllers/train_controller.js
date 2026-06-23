@@ -75,3 +75,30 @@ exports.createRoute = asyncHandler(async (req, res) => {
          data: route
     });
 });
+
+exports.getAllTrains = asyncHandler(async(req, res) =>{
+
+    const trains = await trainService.getAllTrains();
+
+    return res.status(200).json({
+         success: true,
+         data: trains,
+         message:'fetch all trains data successfully'
+    })
+
+})
+
+exports.getTrainById = asyncHandler(async(req, res) =>{
+    const {trainId} = req.params;
+    
+    if(!trainId){
+         throw new BadRequestError("Train Id is missing");
+    }
+    const train = await trainService.getTrainById(trainId);
+
+    return res.status(200).json({
+         success: true,
+         data: train,
+         message:'fetch train data sucessfully'
+    })
+})

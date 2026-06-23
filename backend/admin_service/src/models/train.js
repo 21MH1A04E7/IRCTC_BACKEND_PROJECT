@@ -26,6 +26,31 @@ class Train extends Model {
       },
     };
   }
+  
+  static get relationMappings() {
+    const Seat = require("./seats");
+    const Route = require("./routes");
+
+    return {
+      seats: {
+        relation: Model.HasManyRelation,
+        modelClass: Seat,
+        join: {
+          from: 'train.id',
+          to: 'seats.train_id',
+        },
+      },
+  
+      routes: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Route,
+        join: {
+          from: 'train.id',
+          to: 'routes.train_id',
+        },
+      },
+    };
+  }
 }
 
 module.exports = Train;
