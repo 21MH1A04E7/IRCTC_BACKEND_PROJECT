@@ -52,8 +52,16 @@ router.post(
     adminServiceProxy
     
 )
+
 router.get(
     '/admin/trains/train',
+    requireAuth,
+    adminServiceProxy
+    
+)
+
+router.get(
+    '/admin/trains/train/:trainId',
     requireAuth,
     adminServiceProxy
     
