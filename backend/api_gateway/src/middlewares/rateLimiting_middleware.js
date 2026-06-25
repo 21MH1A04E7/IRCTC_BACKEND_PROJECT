@@ -114,9 +114,59 @@ function ipRateLimit(options={}){
     }
 }
 
+function userRateLimit(options = {}) {
+    const maxRequests = options.max || config.RATE_LIMIT_MAX_REQUESTS * 10;
+    const windowMs = options.windowMs || config.RATE_LIMIT_WINDOW_MS;
 
+    return async (req, res, next) => {
+         // Skip if no user authenticated
+         if (!req.user || !req.user.id) {
+              return next();
+         }
+
+         const userId = req.user.id;
+         const key = `ratelimit:user:${userId}`;
+
+         const result = await rateLimiter(key, maxRequests, windowMs);
+
+         res.setHeader('X-RateLimit-Limit', maxRequests);
+         res.setHeader('X-RateLimit-Remaining', result.remaining);
+         res.setHeader('X-RateLimit-Reset', new Date(result.resetTime).toISOString());
+
+         if (!result.allowed) {
+              res.setHeader('Retry-After', result.retryAfter);
+              logger.warn(`Rate limit exceeded for user: ${userId}`);
+              return next(
+                   new TooManyRequestsError(
+                        `Too many requests. Please try again in ${result.retryAfter} seconds`,
+                        result.retryAfter
+                   )
+              );
+         }
+
+         next();
+    };
+}
+
+
+function combinedRateLimit(ipOptions = {}, userOptions = {}) {
+    const ipLimiter = ipRateLimit(ipOptions);
+    const userLimiter = userRateLimit(userOptions);
+
+    return async (req, res, next) => {
+         // Apply IP rate limit first
+         ipLimiter(req, res, (err) => {
+              if (err) return next(err);
+
+              // Then apply user rate limit if authenticated
+              userLimiter(req, res, next);
+         });
+    };
+}
 
 module.exports = {
     endPointRateLimit,
-    ipRateLimit
+    ipRateLimit,
+    userRateLimit,
+    combinedRateLimit
 }
